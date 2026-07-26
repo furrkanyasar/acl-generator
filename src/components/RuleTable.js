@@ -1,8 +1,8 @@
 /**
- * Rule Table Component (Monospaced Buffer Table with 28px Action Icon Buttons)
+ * Rule Table Component (Monospaced Buffer Table with 28px Action Icon Buttons & XSS Protection)
  */
 
-import { ACTIONS, ADDRESS_TYPES } from '../core/types.js';
+import { ACTIONS, ADDRESS_TYPES, escapeHtml } from '../core/types.js';
 import { maskToWildcard } from '../core/wildcard.js';
 import { t } from '../core/i18n.js';
 
@@ -13,18 +13,20 @@ const ICON_CLONE = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14
 const ICON_DELETE = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
 function formatAddressBadge(type, ip, mask) {
+  const safeIp = escapeHtml(ip);
+  const safeMask = escapeHtml(mask);
   if (type === ADDRESS_TYPES.ANY) return '<span style="color:var(--text-muted);">any</span>';
-  if (type === ADDRESS_TYPES.HOST) return `<span>host <b style="color:#38bdf8;">${ip}</b></span>`;
+  if (type === ADDRESS_TYPES.HOST) return `<span>host <b style="color:#38bdf8;">${safeIp}</b></span>`;
   if (type === ADDRESS_TYPES.SUBNET) {
     const wc = maskToWildcard(mask);
-    return `<span>subnet <b>${ip}</b> <small style="color:var(--text-muted)">(${wc || mask})</small></span>`;
+    return `<span>subnet <b>${safeIp}</b> <small style="color:var(--text-muted)">(${escapeHtml(wc) || safeMask})</small></span>`;
   }
   return 'any';
 }
 
 function formatPortBadge(op, port) {
   if (!op || op === 'any' || !port) return '';
-  return `<span style="font-size:0.78rem; color:var(--badge-warn-fg);">${op} ${port}</span>`;
+  return `<span style="font-size:0.78rem; color:var(--badge-warn-fg);">${escapeHtml(op)} ${escapeHtml(port)}</span>`;
 }
 
 export function renderRuleTable(container, { rules, warnings, onMoveUp, onMoveDown, onEdit, onDuplicate, onDelete }) {
@@ -74,12 +76,12 @@ export function renderRuleTable(container, { rules, warnings, onMoveUp, onMoveDo
                     </td>
                     <td>
                       <span class="badge ${rule.action === ACTIONS.PERMIT ? 'badge-permit' : 'badge-deny'}">
-                        ${rule.action.toUpperCase()}
+                        ${escapeHtml(rule.action.toUpperCase())}
                       </span>
                     </td>
                     <td>
                       <span class="badge badge-protocol">
-                        ${rule.protocol.toUpperCase()}
+                        ${escapeHtml(rule.protocol.toUpperCase())}
                       </span>
                     </td>
                     <td>
@@ -97,9 +99,9 @@ export function renderRuleTable(container, { rules, warnings, onMoveUp, onMoveDo
                       <div style="display:inline-flex; gap:0.2rem;">
                         <button class="btn btn-icon btn-move-up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="${t('moveUp')}">${ICON_UP}</button>
                         <button class="btn btn-icon btn-move-down" data-idx="${idx}" ${idx === rules.length - 1 ? 'disabled' : ''} title="${t('moveDown')}">${ICON_DOWN}</button>
-                        <button class="btn btn-icon btn-edit" data-id="${rule.id}" title="${t('editRule')}">${ICON_EDIT}</button>
-                        <button class="btn btn-icon btn-dup" data-id="${rule.id}" title="${t('duplicateRule')}">${ICON_CLONE}</button>
-                        <button class="btn btn-icon btn-danger btn-del" data-id="${rule.id}" title="${t('deleteRule')}">${ICON_DELETE}</button>
+                        <button class="btn btn-icon btn-edit" data-id="${escapeHtml(rule.id)}" title="${t('editRule')}">${ICON_EDIT}</button>
+                        <button class="btn btn-icon btn-dup" data-id="${escapeHtml(rule.id)}" title="${t('duplicateRule')}">${ICON_CLONE}</button>
+                        <button class="btn btn-icon btn-danger btn-del" data-id="${escapeHtml(rule.id)}" title="${t('deleteRule')}">${ICON_DELETE}</button>
                       </div>
                     </td>
                   </tr>
