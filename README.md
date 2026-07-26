@@ -36,11 +36,9 @@ Cisco, Juniper veya Huawei ağ cihazlarında Erişim Kontrol Listeleri (ACL) olu
 
 ## İnternet Üzerinden Doğrudan Kullanım (GitHub Pages)
 
-Uygulamayı bilgisayarınıza indirmeden, doğrudan internet tarayıcınızda kullanmak için canlı adresi ziyaret edebilirsiniz:
+Uygulamayı bilgisayarınıza indirmeden, doğrudan internet tarayıcınızda kullanmak için canlı adrese tıklayabilirsiniz:
 
-```text
-https://furrkanyasar.github.io/acl-generator/
-```
+👉 **[https://furrkanyasar.github.io/acl-generator/](https://furrkanyasar.github.io/acl-generator/)**
 
 ---
 
@@ -179,11 +177,9 @@ Building Access Control Lists (ACLs) manually on Cisco, Juniper, or Huawei netwo
 
 ### Online Instant Usage (GitHub Pages)
 
-You can use the application directly in your browser without downloading:
+Click below to use the application directly in your browser:
 
-```text
-https://furrkanyasar.github.io/acl-generator/
-```
+👉 **[https://furrkanyasar.github.io/acl-generator/](https://furrkanyasar.github.io/acl-generator/)**
 
 ---
 
