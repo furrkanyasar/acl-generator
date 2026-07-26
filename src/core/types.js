@@ -43,6 +43,16 @@ export const PORT_OPERATORS = {
   RANGE: 'range'
 };
 
+export function escapeHtml(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export function getCommonPorts() {
   return [
     { name: t('ports.http'), value: 80 },
