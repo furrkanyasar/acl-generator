@@ -133,7 +133,7 @@ OK
 
 ## Lisans
 
-Bu proje **MIT Lisansı** ile lisanslanmıştır. Eğitim ve kurumsal ağ mühendisliği kullanımı için tamamen açık kaynaklıdır.
+Bu proje **GNU General Public License v3.0 (GPL-3.0)** ile lisanslanmıştır. Eğitim ve kurumsal ağ mühendisliği kullanımı için tamamen açık kaynaklıdır.
 
 ---
 
@@ -237,6 +237,6 @@ OK
 
 ### License
 
-Distributed under the **MIT License**. Open-source for educational and professional network engineering use.
+Distributed under the **GNU General Public License v3.0 (GPL-3.0)**. Open-source for educational and professional network engineering use.
 
 </details>
