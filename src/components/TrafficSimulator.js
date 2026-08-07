@@ -1,8 +1,8 @@
 /**
- * Traffic Packet Matcher & Simulator Component (Fixed Instant Evaluation & DOM Update)
+ * Traffic Packet Matcher & Simulator Component (With GA4 Event Tracking & ICMP Type Selector)
  */
 
-import { PROTOCOLS, ACTIONS } from '../core/types.js';
+import { PROTOCOLS, ACTIONS, getIcmpTypes } from '../core/types.js';
 import { simulatePacketMatch } from '../core/simulator.js';
 import { generateCiscoACL } from '../core/generators/cisco.js';
 import { t } from '../core/i18n.js';
@@ -94,6 +94,21 @@ export function renderTrafficSimulator(container, { rules, currentPacket, onSimu
               <input type="text" id="sim-dst-port" value="${pkt.dstPort || '80'}" placeholder="80" />
             </div>
           ` : ''}
+
+          ${pkt.protocol === PROTOCOLS.ICMP ? `
+            <div class="form-group">
+              <label for="sim-icmp-type">ICMP Type</label>
+              <select id="sim-icmp-type">
+                <option value="echo" ${pkt.icmpType === 'echo' ? 'selected' : ''}>echo (Type 8)</option>
+                <option value="echo-reply" ${pkt.icmpType === 'echo-reply' ? 'selected' : ''}>echo-reply (Type 0)</option>
+                <option value="unreachable" ${pkt.icmpType === 'unreachable' ? 'selected' : ''}>unreachable (Type 3)</option>
+                <option value="time-exceeded" ${pkt.icmpType === 'time-exceeded' ? 'selected' : ''}>time-exceeded (Type 11)</option>
+                <option value="router-advertisement" ${pkt.icmpType === 'router-advertisement' ? 'selected' : ''}>router-advertisement</option>
+                <option value="mask-request" ${pkt.icmpType === 'mask-request' ? 'selected' : ''}>mask-request</option>
+                <option value="any" ${pkt.icmpType === 'any' ? 'selected' : ''}>any</option>
+              </select>
+            </div>
+          ` : ''}
         </div>
 
         <div style="display:flex; justify-content:flex-end; margin-top:0.3rem;">
@@ -121,7 +136,7 @@ export function renderTrafficSimulator(container, { rules, currentPacket, onSimu
       protocol: document.getElementById('sim-protocol')?.value || PROTOCOLS.TCP,
       srcPort: document.getElementById('sim-src-port')?.value || '1024',
       dstPort: document.getElementById('sim-dst-port')?.value || '80',
-      icmpType: 'echo'
+      icmpType: document.getElementById('sim-icmp-type')?.value || 'echo'
     };
   };
 
@@ -131,12 +146,22 @@ export function renderTrafficSimulator(container, { rules, currentPacket, onSimu
     if (resultBox) {
       resultBox.innerHTML = getResultHtml(currentPkt);
     }
+    if (window.gtag) {
+      window.gtag('event', 'simulate_packet_click', {
+        event_category: 'TrafficSimulator',
+        event_label: currentPkt.protocol
+      });
+    }
     if (onSimulate) onSimulate(currentPkt);
   };
 
   document.getElementById('sim-protocol')?.addEventListener('change', () => {
     const updatedPkt = extractSimPacket();
     renderTrafficSimulator(container, { rules, currentPacket: updatedPkt, onSimulate });
+  });
+
+  document.getElementById('sim-icmp-type')?.addEventListener('change', () => {
+    runSimulation();
   });
 
   document.getElementById('btn-run-sim')?.addEventListener('click', (e) => {
