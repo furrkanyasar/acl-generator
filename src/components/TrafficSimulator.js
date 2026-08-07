@@ -39,24 +39,29 @@ export function renderTrafficSimulator(container, { rules, currentPacket, onSimu
           .join('')
           .trim();
 
+        const decisionMsg = t('decisionLogicMsg')
+          .replace('{matchedIndex}', res.matchedIndex.toString())
+          .replace('{overriddenIndex}', firstOverridden.index.toString())
+          .replace('{action}', lowerActionStr);
+
         overrideHtml = `
           <div style="margin-top:0.6rem; padding:0.65rem; background:rgba(234, 179, 8, 0.08); border:1px solid rgba(234, 179, 8, 0.35); border-radius:6px; font-size:0.8rem;">
             <div style="font-weight:700; color:#eab308; display:flex; align-items:center; gap:0.4rem; font-size:0.85rem;">
-              <span>💡 Explainable Policy Diagnostics (Why?)</span>
+              <span>${t('explainableTitle')}</span>
             </div>
             
             <div style="margin-top:0.4rem; display:flex; flex-direction:column; gap:0.35rem;">
               <div style="font-family:var(--font-mono); background:rgba(0,0,0,0.2); padding:0.35rem 0.5rem; border-radius:4px;">
-                <span style="color:var(--text-muted); font-size:0.75rem;">Later Conflicting ACE:</span><br/>
+                <span style="color:var(--text-muted); font-size:0.75rem;">${t('laterConflictingAce')}</span><br/>
                 <span style="color:var(--text-main); font-weight:600;">ACE #${firstOverridden.index}: ${lowerRuleStr}</span>
               </div>
 
               <div style="color:var(--text-main); line-height:1.4; margin-top:0.2rem;">
-                <b>Decision Logic:</b> ACE #${res.matchedIndex} matched this packet first. Cisco ACL evaluation halts on the first matching rule, so lower ACE #${firstOverridden.index} (${lowerActionStr}) was not evaluated.
+                <b>Karar Mantığı:</b> ${decisionMsg}
               </div>
 
               <div style="background:rgba(239, 68, 68, 0.1); border-left:3px solid #ef4444; padding:0.35rem 0.5rem; color:var(--text-main); font-size:0.78rem;">
-                <b>Shadowed Packet-Space:</b> ${packetData.srcIp} → ${packetData.dstIp} [${packetData.protocol.toUpperCase()}/${packetData.dstPort || packetData.icmpType || ''}]
+                <b>${t('shadowedPacketSpace')}</b> ${packetData.srcIp} → ${packetData.dstIp} [${packetData.protocol.toUpperCase()}/${packetData.dstPort || packetData.icmpType || ''}]
               </div>
             </div>
           </div>
