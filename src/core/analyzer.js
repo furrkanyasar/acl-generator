@@ -2,7 +2,7 @@
  * ACL Analyzer & Static Security Risk Engine (Multi-Dimensional Analysis & Risk Engine)
  */
 
-import { ACL_TYPES, ACTIONS, PROTOCOLS, ADDRESS_TYPES } from './types.js';
+import { ACL_TYPES, ACTIONS, PROTOCOLS, ADDRESS_TYPES, normalizePort } from './types.js';
 import { isValidIp, ipToInt, maskToWildcard } from './wildcard.js';
 import { t } from './i18n.js';
 
@@ -49,8 +49,32 @@ function isProtocolSubsumed(aProto, bProto) {
 }
 
 function isPortSubsumed(aOp, aPort, aPortEnd, bOp, bPort, bPortEnd) {
-  if (aOp === 'any' || !aOp) return true;
-  if (aOp === 'eq' && bOp === 'eq') return aPort === bPort;
+  if (!aOp || aOp === 'any') return true;
+  const pA = normalizePort(aPort);
+  const pB = normalizePort(bPort);
+
+  if (aOp === 'eq') {
+    if (bOp === 'eq') return pA !== null && pA === pB;
+    return false;
+  }
+
+  if (aOp === 'range' && aPort && aPortEnd) {
+    const rAStart = normalizePort(aPort);
+    const rAEnd = normalizePort(aPortEnd);
+    if (rAStart === null || rAEnd === null) return false;
+
+    if (bOp === 'eq' && pB !== null) {
+      return pB >= rAStart && pB <= rAEnd;
+    }
+
+    if (bOp === 'range' && bPort && bPortEnd) {
+      const rBStart = normalizePort(bPort);
+      const rBEnd = normalizePort(bPortEnd);
+      if (rBStart === null || rBEnd === null) return false;
+      return rBStart >= rAStart && rBEnd <= rAEnd;
+    }
+  }
+
   return false;
 }
 
@@ -102,7 +126,7 @@ export function analyzeACL(aclConfig, rules) {
   for (let i = 0; i < activeRules.length; i++) {
     const prevRule = activeRules[i];
 
-    // Static Security Risk Assessment
+    // Static Security Risk Assessment (Professional Tone)
     if (prevRule.action === ACTIONS.PERMIT) {
       // High Risk: Permit IP Any Any
       if (prevRule.protocol === PROTOCOLS.IP && prevRule.srcType === ADDRESS_TYPES.ANY && prevRule.dstType === ADDRESS_TYPES.ANY) {
@@ -110,8 +134,8 @@ export function analyzeACL(aclConfig, rules) {
           id: `risk-any-any-${prevRule.id}`,
           type: 'danger',
           severity: 'error',
-          title: `🔴 HIGH SECURITY RISK: Unrestricted IP Access (ACE #${i + 1})`,
-          message: `ACE #${i + 1} permits unrestricted IP traffic from ANY source to ANY destination.`
+          title: `🔴 HIGH RISK / VERY BROAD PERMIT (ACE #${i + 1})`,
+          message: `ACE #${i + 1} permits unrestricted IP traffic from ANY source to ANY destination. Review recommended.`
         });
       }
 
@@ -121,7 +145,7 @@ export function analyzeACL(aclConfig, rules) {
           id: `risk-mgmt-ssh-${prevRule.id}`,
           type: 'danger',
           severity: 'error',
-          title: `🔴 HIGH SECURITY RISK: Management Administration Access (ACE #${i + 1})`,
+          title: `🔴 HIGH RISK / MANAGEMENT ACCESS PERMIT (ACE #${i + 1})`,
           message: `ACE #${i + 1} permits direct administrative access (Port ${prevRule.dstPort}) to Management VLAN.`
         });
       }
