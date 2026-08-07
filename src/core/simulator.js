@@ -2,7 +2,7 @@
  * Traffic Packet Matcher & Simulator Engine
  */
 
-import { ACTIONS, PROTOCOLS, ADDRESS_TYPES } from './types.js';
+import { ACTIONS, PROTOCOLS, ADDRESS_TYPES, normalizePort } from './types.js';
 import { isValidIp, ipToInt, maskToWildcard } from './wildcard.js';
 
 function matchIp(ruleType, ruleIp, ruleMask, packetIp) {
@@ -30,17 +30,17 @@ function matchIp(ruleType, ruleIp, ruleMask, packetIp) {
 
 function matchPort(operator, rulePort, rulePortEnd, packetPort) {
   if (!operator || operator === 'any' || !rulePort) return true;
-  const pPort = parseInt(packetPort, 10);
-  const rPort = parseInt(rulePort, 10);
-  if (isNaN(pPort) || isNaN(rPort)) return false;
+  const pPort = normalizePort(packetPort);
+  const rPort = normalizePort(rulePort);
+  if (pPort === null || rPort === null) return false;
 
   if (operator === 'eq') return pPort === rPort;
   if (operator === 'neq') return pPort !== rPort;
   if (operator === 'gt') return pPort > rPort;
   if (operator === 'lt') return pPort < rPort;
   if (operator === 'range' && rulePortEnd) {
-    const rEnd = parseInt(rulePortEnd, 10);
-    return !isNaN(rEnd) && pPort >= rPort && pPort <= rEnd;
+    const rEnd = normalizePort(rulePortEnd);
+    return rEnd !== null && pPort >= rPort && pPort <= rEnd;
   }
   return true;
 }

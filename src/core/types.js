@@ -43,6 +43,50 @@ export const PORT_OPERATORS = {
   RANGE: 'range'
 };
 
+export const PORT_ALIASES = {
+  'domain': 53,
+  'www': 80,
+  'http': 80,
+  'https': 443,
+  'smtp': 25,
+  'submission': 587,
+  'pop3': 110,
+  'pop3s': 995,
+  'imap': 143,
+  'imaps': 993,
+  'ssh': 22,
+  'telnet': 23,
+  'ftp': 21,
+  'ftp-data': 20,
+  'dns': 53,
+  'bootps': 67,
+  'bootpc': 68,
+  'dhcp': 67,
+  'tftp': 69,
+  'ntp': 123,
+  'snmp': 161,
+  'snmptrap': 162,
+  'bgp': 179,
+  'ldap': 389,
+  'ldaps': 636,
+  'microsoft-ds': 445,
+  'netbios-ns': 137,
+  'netbios-dgm': 138,
+  'netbios-ssn': 139,
+  'syslog': 514,
+  'rdp': 3389
+};
+
+export function normalizePort(portValue) {
+  if (portValue === null || portValue === undefined) return null;
+  const str = portValue.toString().trim().toLowerCase();
+  if (PORT_ALIASES[str] !== undefined) {
+    return PORT_ALIASES[str];
+  }
+  const parsed = parseInt(str, 10);
+  return isNaN(parsed) ? null : parsed;
+}
+
 export function escapeHtml(str) {
   if (typeof str !== 'string') return str;
   return str
