@@ -143,7 +143,7 @@ FINAL DECISION:                  PASS
 
 ## Lisans
 
-Bu proje **MIT Lisansı** ile lisanslanmıştır. Eğitim ve kurumsal ağ mühendisliği kullanımı için tamamen açık kaynaklıdır.
+Bu proje **GPL-3.0 license** ile lisanslanmıştır. Eğitim ve kurumsal ağ mühendisliği kullanımı için tamamen açık kaynaklıdır.
 
 ---
 
@@ -259,6 +259,6 @@ FINAL DECISION:                  PASS
 
 ### License
 
-Distributed under the **MIT License**. Open-source for educational and professional network engineering use.
+Distributed under the **GPL-3.0 license**. Open-source for educational and professional network engineering use.
 
 </details>
