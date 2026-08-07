@@ -54,6 +54,11 @@ function isPortSubsumed(aOp, aPort, aPortEnd, bOp, bPort, bPortEnd) {
   return false;
 }
 
+function isIcmpSubsumed(aIcmp, bIcmp) {
+  if (!aIcmp || aIcmp === 'any') return true;
+  return aIcmp === bIcmp;
+}
+
 export function analyzeACL(aclConfig, rules) {
   const warnings = [];
 
@@ -126,7 +131,11 @@ export function analyzeACL(aclConfig, rules) {
         nextRule.dstPortOperator, nextRule.dstPort, nextRule.dstPortEnd
       );
 
-      if (protoSubsumed && srcSubsumed && dstSubsumed && srcPortSubsumed && dstPortSubsumed) {
+      const icmpSubsumed = (prevRule.protocol === PROTOCOLS.ICMP && nextRule.protocol === PROTOCOLS.ICMP)
+        ? isIcmpSubsumed(prevRule.icmpType, nextRule.icmpType)
+        : true;
+
+      if (protoSubsumed && srcSubsumed && dstSubsumed && srcPortSubsumed && dstPortSubsumed && icmpSubsumed) {
         const msg = t('shadowedMsg')
           .replace('{next}', (j + 1).toString())
           .replace('{nextProto}', `${nextRule.action.toUpperCase()} ${nextRule.protocol}`)
