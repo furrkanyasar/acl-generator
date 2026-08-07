@@ -10,7 +10,7 @@ export function getStarterTemplates() {
 
   return [
     {
-      name: isTr ? '[DMZ] Web Sunucusu Güvenlik Sertleştirmesi' : '[DMZ] Web Server Hardening',
+      name: isTr ? '[DMZ] Web Sunucusu Güvenlik Sıkılaştırması' : '[DMZ] Web Server Hardening',
       description: isTr 
         ? 'DMZ Web Sunucusuna (192.168.1.50) HTTP (80) ve HTTPS (443) ile Yönetici bilgisayarından SSH (22) erişimine izin verir.' 
         : 'Permits inbound HTTP (80) & HTTPS (443) to DMZ Web Server (192.168.1.50) and SSH (22) from Admin host.',
@@ -150,6 +150,97 @@ export function getStarterTemplates() {
           icmpType: 'any',
           log: false,
           remark: isTr ? 'Misafir Ağının İnternete erişimine izin ver' : 'Permit Guest Subnet to Internet'
+        }
+      ]
+    },
+    {
+      name: isTr ? '[SEC-ADV] Kurumsal Altyapı & Yönetim Ağı Güvenliği' : '[SEC-ADV] Enterprise Infrastructure & Management Hardening',
+      description: isTr 
+        ? 'Sadece yetkili Yönetim Subnetinden (10.20.10.0/24) Yönetim VLANına (10.20.40.0/24) SSH (22) ve HTTPS (443) erişimine izin verir, yetkisiz tüm yönetişim erişimini engeller ve loglar.'
+        : 'Permits SSH (22) & HTTPS (443) from Authorized Admin Subnet (10.20.10.0/24) to Management VLAN (10.20.40.0/24), denying and logging all unauthorized management attempts.',
+      config: {
+        vendor: 'cisco',
+        type: ACL_TYPES.EXTENDED_NAMED,
+        identifier: 'CORP_MGMT_HARDENING_ACL',
+        interfaceName: 'GigabitEthernet0/0/0',
+        interfaceDirection: 'in'
+      },
+      rules: [
+        {
+          id: '1',
+          enabled: true,
+          action: ACTIONS.PERMIT,
+          protocol: PROTOCOLS.ICMP,
+          srcType: ADDRESS_TYPES.SUBNET,
+          srcIp: '10.20.10.0',
+          srcMask: '255.255.255.0',
+          srcPortOperator: 'any',
+          srcPort: '',
+          dstType: ADDRESS_TYPES.SUBNET,
+          dstIp: '10.20.40.0',
+          dstMask: '255.255.255.0',
+          dstPortOperator: 'any',
+          dstPort: '',
+          icmpType: 'echo',
+          log: false,
+          remark: isTr ? 'Ağ tanısı için ICMP Echo erişimine izin ver' : 'Permit ICMP Echo for management network diagnostics'
+        },
+        {
+          id: '2',
+          enabled: true,
+          action: ACTIONS.PERMIT,
+          protocol: PROTOCOLS.TCP,
+          srcType: ADDRESS_TYPES.SUBNET,
+          srcIp: '10.20.10.0',
+          srcMask: '255.255.255.0',
+          srcPortOperator: 'any',
+          srcPort: '',
+          dstType: ADDRESS_TYPES.SUBNET,
+          dstIp: '10.20.40.0',
+          dstMask: '255.255.255.0',
+          dstPortOperator: 'eq',
+          dstPort: '22',
+          icmpType: 'any',
+          log: true,
+          remark: isTr ? 'Yönetici Subnetinden Yönetim VLANına Güvenli SSH İzni' : 'Permit Secure SSH Access from Admin Subnet to Management VLAN'
+        },
+        {
+          id: '3',
+          enabled: true,
+          action: ACTIONS.PERMIT,
+          protocol: PROTOCOLS.TCP,
+          srcType: ADDRESS_TYPES.SUBNET,
+          srcIp: '10.20.10.0',
+          srcMask: '255.255.255.0',
+          srcPortOperator: 'any',
+          srcPort: '',
+          dstType: ADDRESS_TYPES.SUBNET,
+          dstIp: '10.20.40.0',
+          dstMask: '255.255.255.0',
+          dstPortOperator: 'eq',
+          dstPort: '443',
+          icmpType: 'any',
+          log: true,
+          remark: isTr ? 'Yönetici Subnetinden Yönetim VLANına Güvenli HTTPS İzni' : 'Permit Secure HTTPS Web GUI Access from Admin Subnet'
+        },
+        {
+          id: '4',
+          enabled: true,
+          action: ACTIONS.DENY,
+          protocol: PROTOCOLS.IP,
+          srcType: ADDRESS_TYPES.ANY,
+          srcIp: '',
+          srcMask: '',
+          srcPortOperator: 'any',
+          srcPort: '',
+          dstType: ADDRESS_TYPES.SUBNET,
+          dstIp: '10.20.40.0',
+          dstMask: '255.255.255.0',
+          dstPortOperator: 'any',
+          dstPort: '',
+          icmpType: 'any',
+          log: true,
+          remark: isTr ? 'Yönetim VLANına Yetkisiz Tüm Erişimleri Engelle ve Logla' : 'Block and Log all unauthorized access to Management Subnet'
         }
       ]
     }
