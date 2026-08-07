@@ -104,6 +104,10 @@ export const translations = {
     simDstPort: 'HEDEF PORT',
     testPacketBtn: 'Paket Eşleşmesini Test Et',
     matchResultTitle: 'EŞLEŞME SONUCU',
+    explainableTitle: '💡 Açıklanabilir Politika Teşhisi (Neden?)',
+    laterConflictingAce: 'Alt Sıradaki Çatışan Kural (ACE):',
+    decisionLogicMsg: 'Kural #{matchedIndex} bu paketle ilk sırada eşleşti. Cisco ACL değerlendirmesi ilk eşleşen kuralda durur, bu nedenle alt sıradaki Kural #{overriddenIndex} ({action}) değerlendirilmedi.',
+    shadowedPacketSpace: 'Gölgelenen Paket Alanı:',
 
     // Import Modal
     importModalTitle: 'RAW CISCO CLI İÇE AKTAR VE PARSE ET',
@@ -250,6 +254,10 @@ export const translations = {
     simDstPort: 'DESTINATION PORT',
     testPacketBtn: 'Simulate Packet Match',
     matchResultTitle: 'SIMULATION MATCH RESULT',
+    explainableTitle: '💡 Explainable Policy Diagnostics (Why?)',
+    laterConflictingAce: 'Later Conflicting ACE:',
+    decisionLogicMsg: 'ACE #{matchedIndex} matched this packet first. Cisco ACL evaluation halts on the first matching rule, so lower ACE #{overriddenIndex} ({action}) was not evaluated.',
+    shadowedPacketSpace: 'Shadowed Packet-Space:',
 
     // Import Modal
     importModalTitle: 'IMPORT & PARSE RAW CISCO CLI',
