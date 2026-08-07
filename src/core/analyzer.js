@@ -1,5 +1,5 @@
 /**
- * ACL Analyzer & Educational Warning Engine (Localized with Partial Overlap Detection)
+ * ACL Analyzer & Static Security Risk Engine (Multi-Dimensional Analysis & Risk Engine)
  */
 
 import { ACL_TYPES, ACTIONS, PROTOCOLS, ADDRESS_TYPES } from './types.js';
@@ -49,7 +49,7 @@ function isProtocolSubsumed(aProto, bProto) {
 }
 
 function isPortSubsumed(aOp, aPort, aPortEnd, bOp, bPort, bPortEnd) {
-  if (aOp === 'any') return true;
+  if (aOp === 'any' || !aOp) return true;
   if (aOp === 'eq' && bOp === 'eq') return aPort === bPort;
   return false;
 }
@@ -71,27 +71,17 @@ export function analyzeACL(aclConfig, rules) {
     message: t('implicitDenyMsg')
   });
 
-  // 2. Best Practice Placement Advice based on ACL Type
+  // 2. Best Practice Placement Advice
   const isStandard = aclConfig.type === ACL_TYPES.STANDARD_NUMBERED || aclConfig.type === ACL_TYPES.STANDARD_NAMED;
-  if (isStandard) {
-    warnings.push({
-      id: 'placement-advice',
-      type: 'tip',
-      severity: 'info',
-      title: t('standardPlacementTitle'),
-      message: t('standardPlacementMsg')
-    });
-  } else {
-    warnings.push({
-      id: 'placement-advice',
-      type: 'tip',
-      severity: 'info',
-      title: t('extendedPlacementTitle'),
-      message: t('extendedPlacementMsg')
-    });
-  }
+  warnings.push({
+    id: 'placement-advice',
+    type: 'tip',
+    severity: 'info',
+    title: isStandard ? t('standardPlacementTitle') : t('extendedPlacementTitle'),
+    message: isStandard ? t('standardPlacementMsg') : t('extendedPlacementMsg')
+  });
 
-  // 3. Interface Direction Helper Note
+  // 3. Interface Direction Note
   if (aclConfig.interfaceName) {
     const dirText = aclConfig.interfaceDirection === 'in'
       ? `${t('inboundDesc')} (${aclConfig.interfaceName})`
@@ -106,10 +96,37 @@ export function analyzeACL(aclConfig, rules) {
     });
   }
 
-  // 4. Shadowed & Redundant Rule Detection
+  // 4. Multi-Dimensional Overlap, Shadowing & Security Risk Engine
   const activeRules = rules.filter(r => r.enabled);
+
   for (let i = 0; i < activeRules.length; i++) {
     const prevRule = activeRules[i];
+
+    // Static Security Risk Assessment
+    if (prevRule.action === ACTIONS.PERMIT) {
+      // High Risk: Permit IP Any Any
+      if (prevRule.protocol === PROTOCOLS.IP && prevRule.srcType === ADDRESS_TYPES.ANY && prevRule.dstType === ADDRESS_TYPES.ANY) {
+        warnings.push({
+          id: `risk-any-any-${prevRule.id}`,
+          type: 'danger',
+          severity: 'error',
+          title: `🔴 HIGH SECURITY RISK: Unrestricted IP Access (ACE #${i + 1})`,
+          message: `ACE #${i + 1} permits unrestricted IP traffic from ANY source to ANY destination.`
+        });
+      }
+
+      // High Risk: Permit SSH/Telnet to Management Network
+      if ((prevRule.dstPort === '22' || prevRule.dstPort === '23') && prevRule.dstIp && prevRule.dstIp.includes('40.')) {
+        warnings.push({
+          id: `risk-mgmt-ssh-${prevRule.id}`,
+          type: 'danger',
+          severity: 'error',
+          title: `🔴 HIGH SECURITY RISK: Management Administration Access (ACE #${i + 1})`,
+          message: `ACE #${i + 1} permits direct administrative access (Port ${prevRule.dstPort}) to Management VLAN.`
+        });
+      }
+    }
+
     for (let j = i + 1; j < activeRules.length; j++) {
       const nextRule = activeRules[j];
 
@@ -138,21 +155,37 @@ export function analyzeACL(aclConfig, rules) {
       const isFullShadow = protoSubsumed && srcSubsumed && dstSubsumed && srcPortSubsumed && dstPortSubsumed && icmpSubsumed;
 
       if (isFullShadow) {
-        const msg = t('shadowedMsg')
-          .replace('{next}', (j + 1).toString())
-          .replace('{nextProto}', `${nextRule.action.toUpperCase()} ${nextRule.protocol}`)
-          .replace('{prev}', (i + 1).toString())
-          .replace('{prevProto}', `${prevRule.action.toUpperCase()} ${prevRule.protocol}`);
+        if (prevRule.action === nextRule.action) {
+          // REDUNDANT or DUPLICATE
+          const isExactDuplicate = prevRule.protocol === nextRule.protocol &&
+            prevRule.srcIp === nextRule.srcIp && prevRule.dstIp === nextRule.dstIp &&
+            prevRule.dstPort === nextRule.dstPort;
 
-        warnings.push({
-          id: `shadowed-${nextRule.id}`,
-          type: 'danger',
-          severity: 'error',
-          title: t('shadowedTitle'),
-          message: msg
-        });
+          warnings.push({
+            id: `shadowed-${nextRule.id}`,
+            type: 'warning',
+            severity: 'warning',
+            title: isExactDuplicate ? `DUPLICATE ACE (ACE #${j + 1})` : `REDUNDANT ACE (ACE #${j + 1})`,
+            message: `ACE #${j + 1} is redundant because ACE #${i + 1} (${prevRule.action.toUpperCase()} ${prevRule.protocol.toUpperCase()}) already covers this traffic.`
+          });
+        } else {
+          // FULLY SHADOWED WITH ACTION CONFLICT
+          const msg = t('shadowedMsg')
+            .replace('{next}', (j + 1).toString())
+            .replace('{nextProto}', `${nextRule.action.toUpperCase()} ${nextRule.protocol}`)
+            .replace('{prev}', (i + 1).toString())
+            .replace('{prevProto}', `${prevRule.action.toUpperCase()} ${prevRule.protocol}`);
+
+          warnings.push({
+            id: `shadowed-${nextRule.id}`,
+            type: 'danger',
+            severity: 'error',
+            title: `FULLY SHADOWED (ACE #${j + 1})`,
+            message: `${msg} [Action Conflict: ${prevRule.action.toUpperCase()} overrides ${nextRule.action.toUpperCase()}]`
+          });
+        }
       } else if (prevRule.action !== nextRule.action) {
-        // Partial Overlap Detection
+        // Multi-Dimensional Partial Overlap with Action Conflict
         const prevDstAny = prevRule.dstType === ADDRESS_TYPES.ANY;
         const nextDstSpecific = nextRule.dstType !== ADDRESS_TYPES.ANY;
         const prevHasPort = prevRule.dstPortOperator && prevRule.dstPortOperator !== 'any';
@@ -163,8 +196,8 @@ export function analyzeACL(aclConfig, rules) {
             id: `partial-${nextRule.id}`,
             type: 'warning',
             severity: 'important',
-            title: `Partially Overlapped Policy (ACE #${j + 1})`,
-            message: `ACE #${j + 1} (${nextRule.action.toUpperCase()} ${nextRule.protocol}) is partially overlapped by ACE #${i + 1} (${prevRule.action.toUpperCase()}) on port ${prevRule.dstPort}. Traffic on port ${prevRule.dstRule || prevRule.dstPort} will pass before reaching ACE #${j + 1}.`
+            title: `PARTIALLY SHADOWED POLICY (ACE #${j + 1})`,
+            message: `ACE #${j + 1} (${nextRule.action.toUpperCase()} ${nextRule.protocol.toUpperCase()}) is partially shadowed by ACE #${i + 1} (${prevRule.action.toUpperCase()}) on port ${prevRule.dstPort}. Traffic on Port ${prevRule.dstPort} will be ${prevRule.action.toUpperCase()}TED before reaching ACE #${j + 1}.`
           });
         }
       }

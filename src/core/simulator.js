@@ -1,5 +1,5 @@
 /**
- * Traffic Packet Matcher & Simulator Engine
+ * Traffic Packet Matcher & Simulator Engine (With First-Match Override Diagnostics)
  */
 
 import { ACTIONS, PROTOCOLS, ADDRESS_TYPES, normalizePort } from './types.js';
@@ -48,61 +48,53 @@ function matchPort(operator, rulePort, rulePortEnd, packetPort) {
   return true;
 }
 
+function checkRuleMatch(rule, packet) {
+  if (rule.protocol !== PROTOCOLS.IP && rule.protocol !== packet.protocol) return false;
+  if (!matchIp(rule.srcType, rule.srcIp, rule.srcMask, rule.srcWildcard, packet.srcIp)) return false;
+  if ((packet.protocol === PROTOCOLS.TCP || packet.protocol === PROTOCOLS.UDP)) {
+    if (!matchPort(rule.srcPortOperator, rule.srcPort, rule.srcPortEnd, packet.srcPort)) return false;
+  }
+  if (!matchIp(rule.dstType, rule.dstIp, rule.dstMask, rule.dstWildcard, packet.dstIp)) return false;
+  if ((packet.protocol === PROTOCOLS.TCP || packet.protocol === PROTOCOLS.UDP)) {
+    if (!matchPort(rule.dstPortOperator, rule.dstPort, rule.dstPortEnd, packet.dstPort)) return false;
+  }
+  if (packet.protocol === PROTOCOLS.ICMP && rule.icmpType && rule.icmpType !== 'any') {
+    if (packet.icmpType && rule.icmpType !== packet.icmpType) return false;
+  }
+  return true;
+}
+
 export function simulatePacketMatch(rules, packet) {
   const activeRules = rules.filter(r => r.enabled);
 
   for (let i = 0; i < activeRules.length; i++) {
     const rule = activeRules[i];
 
-    // 1. Protocol Match
-    if (rule.protocol !== PROTOCOLS.IP && rule.protocol !== packet.protocol) {
-      continue;
-    }
-
-    // 2. Source Address Match
-    if (!matchIp(rule.srcType, rule.srcIp, rule.srcMask, rule.srcWildcard, packet.srcIp)) {
-      continue;
-    }
-
-    // 3. Source Port Match (TCP/UDP)
-    if ((packet.protocol === PROTOCOLS.TCP || packet.protocol === PROTOCOLS.UDP)) {
-      if (!matchPort(rule.srcPortOperator, rule.srcPort, rule.srcPortEnd, packet.srcPort)) {
-        continue;
+    if (checkRuleMatch(rule, packet)) {
+      // Find subsequent rules that would have matched with a conflicting action
+      const overridden = [];
+      for (let j = i + 1; j < activeRules.length; j++) {
+        const lowerRule = activeRules[j];
+        if (lowerRule.action !== rule.action && checkRuleMatch(lowerRule, packet)) {
+          overridden.push({ index: j + 1, rule: lowerRule });
+        }
       }
-    }
 
-    // 4. Destination Address Match
-    if (!matchIp(rule.dstType, rule.dstIp, rule.dstMask, rule.dstWildcard, packet.dstIp)) {
-      continue;
+      return {
+        matched: true,
+        matchedIndex: i + 1,
+        rule,
+        action: rule.action,
+        overridden
+      };
     }
-
-    // 5. Destination Port Match (TCP/UDP)
-    if ((packet.protocol === PROTOCOLS.TCP || packet.protocol === PROTOCOLS.UDP)) {
-      if (!matchPort(rule.dstPortOperator, rule.dstPort, rule.dstPortEnd, packet.dstPort)) {
-        continue;
-      }
-    }
-
-    // 6. ICMP Type Match
-    if (packet.protocol === PROTOCOLS.ICMP && rule.icmpType && rule.icmpType !== 'any') {
-      if (packet.icmpType && rule.icmpType !== packet.icmpType) {
-        continue;
-      }
-    }
-
-    // Exact Match Found!
-    return {
-      matched: true,
-      matchedIndex: i + 1,
-      rule,
-      action: rule.action
-    };
   }
 
   // No match found -> Implicit Deny
   return {
     matched: false,
     implicitDeny: true,
-    action: ACTIONS.DENY
+    action: ACTIONS.DENY,
+    overridden: []
   };
 }
