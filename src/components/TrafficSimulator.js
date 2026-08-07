@@ -1,8 +1,8 @@
 /**
- * Traffic Packet Matcher & Simulator Component (With GA4 Event Tracking & ICMP Type Selector)
+ * Traffic Packet Matcher & Simulator Component (With Explainable First-Match Diagnostics & Shadowed Packet-Space Card)
  */
 
-import { PROTOCOLS, ACTIONS, getIcmpTypes } from '../core/types.js';
+import { PROTOCOLS, ACTIONS } from '../core/types.js';
 import { simulatePacketMatch } from '../core/simulator.js';
 import { generateCiscoACL } from '../core/generators/cisco.js';
 import { t } from '../core/i18n.js';
@@ -29,14 +29,49 @@ export function renderTrafficSimulator(container, { rules, currentPacket, onSimu
             .trim()
         : `${res.rule.action} ${res.rule.protocol}`;
 
+      let overrideHtml = '';
+      if (res.overridden && res.overridden.length > 0) {
+        const firstOverridden = res.overridden[0];
+        const lowerActionStr = firstOverridden.rule.action.toUpperCase();
+        const lowerRuleStr = generateCiscoACL({ type: 'extended_named', identifier: '' }, [firstOverridden.rule])
+          .split('\n')
+          .filter(l => l.trim() && !l.startsWith('!') && !l.startsWith('ip access-list') && !l.startsWith('exit'))
+          .join('')
+          .trim();
+
+        overrideHtml = `
+          <div style="margin-top:0.6rem; padding:0.65rem; background:rgba(234, 179, 8, 0.08); border:1px solid rgba(234, 179, 8, 0.35); border-radius:6px; font-size:0.8rem;">
+            <div style="font-weight:700; color:#eab308; display:flex; align-items:center; gap:0.4rem; font-size:0.85rem;">
+              <span>💡 Explainable Policy Diagnostics (Why?)</span>
+            </div>
+            
+            <div style="margin-top:0.4rem; display:flex; flex-direction:column; gap:0.35rem;">
+              <div style="font-family:var(--font-mono); background:rgba(0,0,0,0.2); padding:0.35rem 0.5rem; border-radius:4px;">
+                <span style="color:var(--text-muted); font-size:0.75rem;">Later Conflicting ACE:</span><br/>
+                <span style="color:var(--text-main); font-weight:600;">ACE #${firstOverridden.index}: ${lowerRuleStr}</span>
+              </div>
+
+              <div style="color:var(--text-main); line-height:1.4; margin-top:0.2rem;">
+                <b>Decision Logic:</b> ACE #${res.matchedIndex} matched this packet first. Cisco ACL evaluation halts on the first matching rule, so lower ACE #${firstOverridden.index} (${lowerActionStr}) was not evaluated.
+              </div>
+
+              <div style="background:rgba(239, 68, 68, 0.1); border-left:3px solid #ef4444; padding:0.35rem 0.5rem; color:var(--text-main); font-size:0.78rem;">
+                <b>Shadowed Packet-Space:</b> ${packetData.srcIp} → ${packetData.dstIp} [${packetData.protocol.toUpperCase()}/${packetData.dstPort || packetData.icmpType || ''}]
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       return `
-        <div class="syslog-line ${isPermit ? 'info' : 'error'}" style="margin-top:0.4rem; padding:0.55rem;">
+        <div class="syslog-line ${isPermit ? 'info' : 'error'}" style="margin-top:0.4rem; padding:0.65rem;">
           <span class="syslog-hdr" style="color: ${isPermit ? 'var(--badge-permit-fg)' : 'var(--badge-deny-fg)'}">
             [MATCH - ${res.action.toUpperCase()}] Matched Line #${res.matchedIndex}
           </span>
-          <div style="font-family:var(--font-mono); margin-top:0.3rem; color:var(--text-main); font-size:0.85rem; font-weight:600;">
+          <div style="font-family:var(--font-mono); margin-top:0.3rem; color:var(--text-main); font-size:0.88rem; font-weight:600;">
             ${ruleStr}
           </div>
+          ${overrideHtml}
         </div>
       `;
     } else {
