@@ -5,7 +5,7 @@
 import { ACTIONS, PROTOCOLS, ADDRESS_TYPES, normalizePort } from './types.js';
 import { isValidIp, ipToInt, maskToWildcard } from './wildcard.js';
 
-function matchIp(ruleType, ruleIp, ruleMask, packetIp) {
+function matchIp(ruleType, ruleIp, ruleMask, ruleWildcard, packetIp) {
   if (ruleType === ADDRESS_TYPES.ANY) return true;
   if (!isValidIp(packetIp)) return false;
 
@@ -15,7 +15,10 @@ function matchIp(ruleType, ruleIp, ruleMask, packetIp) {
 
   if (ruleType === ADDRESS_TYPES.SUBNET) {
     if (!isValidIp(ruleIp)) return false;
-    const wildcard = maskToWildcard(ruleMask);
+    let wildcard = maskToWildcard(ruleMask);
+    if (!wildcard && ruleWildcard && isValidIp(ruleWildcard)) {
+      wildcard = ruleWildcard;
+    }
     if (!wildcard) return false;
     
     const wildInt = ipToInt(wildcard);
@@ -57,7 +60,7 @@ export function simulatePacketMatch(rules, packet) {
     }
 
     // 2. Source Address Match
-    if (!matchIp(rule.srcType, rule.srcIp, rule.srcMask, packet.srcIp)) {
+    if (!matchIp(rule.srcType, rule.srcIp, rule.srcMask, rule.srcWildcard, packet.srcIp)) {
       continue;
     }
 
@@ -69,7 +72,7 @@ export function simulatePacketMatch(rules, packet) {
     }
 
     // 4. Destination Address Match
-    if (!matchIp(rule.dstType, rule.dstIp, rule.dstMask, packet.dstIp)) {
+    if (!matchIp(rule.dstType, rule.dstIp, rule.dstMask, rule.dstWildcard, packet.dstIp)) {
       continue;
     }
 
