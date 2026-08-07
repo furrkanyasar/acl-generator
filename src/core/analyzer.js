@@ -1,5 +1,5 @@
 /**
- * ACL Analyzer & Educational Warning Engine (Localized)
+ * ACL Analyzer & Educational Warning Engine (Localized with Partial Overlap Detection)
  */
 
 import { ACL_TYPES, ACTIONS, PROTOCOLS, ADDRESS_TYPES } from './types.js';
@@ -135,7 +135,9 @@ export function analyzeACL(aclConfig, rules) {
         ? isIcmpSubsumed(prevRule.icmpType, nextRule.icmpType)
         : true;
 
-      if (protoSubsumed && srcSubsumed && dstSubsumed && srcPortSubsumed && dstPortSubsumed && icmpSubsumed) {
+      const isFullShadow = protoSubsumed && srcSubsumed && dstSubsumed && srcPortSubsumed && dstPortSubsumed && icmpSubsumed;
+
+      if (isFullShadow) {
         const msg = t('shadowedMsg')
           .replace('{next}', (j + 1).toString())
           .replace('{nextProto}', `${nextRule.action.toUpperCase()} ${nextRule.protocol}`)
@@ -149,6 +151,22 @@ export function analyzeACL(aclConfig, rules) {
           title: t('shadowedTitle'),
           message: msg
         });
+      } else if (prevRule.action !== nextRule.action) {
+        // Partial Overlap Detection
+        const prevDstAny = prevRule.dstType === ADDRESS_TYPES.ANY;
+        const nextDstSpecific = nextRule.dstType !== ADDRESS_TYPES.ANY;
+        const prevHasPort = prevRule.dstPortOperator && prevRule.dstPortOperator !== 'any';
+        const nextNoPort = !nextRule.dstPortOperator || nextRule.dstPortOperator === 'any';
+
+        if (prevDstAny && nextDstSpecific && prevHasPort && nextNoPort) {
+          warnings.push({
+            id: `partial-${nextRule.id}`,
+            type: 'warning',
+            severity: 'important',
+            title: `Partially Overlapped Policy (ACE #${j + 1})`,
+            message: `ACE #${j + 1} (${nextRule.action.toUpperCase()} ${nextRule.protocol}) is partially overlapped by ACE #${i + 1} (${prevRule.action.toUpperCase()}) on port ${prevRule.dstPort}. Traffic on port ${prevRule.dstRule || prevRule.dstPort} will pass before reaching ACE #${j + 1}.`
+          });
+        }
       }
     }
   }
