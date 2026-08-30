@@ -97,11 +97,11 @@ export function renderRuleTable(container, { rules, warnings, onMoveUp, onMoveDo
                     </td>
                     <td style="text-align:right;">
                       <div style="display:inline-flex; gap:0.2rem;">
-                        <button class="btn btn-icon btn-move-up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="${t('moveUp')}">${ICON_UP}</button>
-                        <button class="btn btn-icon btn-move-down" data-idx="${idx}" ${idx === rules.length - 1 ? 'disabled' : ''} title="${t('moveDown')}">${ICON_DOWN}</button>
-                        <button class="btn btn-icon btn-edit" data-id="${escapeHtml(rule.id)}" title="${t('editRule')}">${ICON_EDIT}</button>
-                        <button class="btn btn-icon btn-dup" data-id="${escapeHtml(rule.id)}" title="${t('duplicateRule')}">${ICON_CLONE}</button>
-                        <button class="btn btn-icon btn-danger btn-del" data-id="${escapeHtml(rule.id)}" title="${t('deleteRule')}">${ICON_DELETE}</button>
+                        <button class="btn btn-icon btn-move-up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="${t('moveUp')}" aria-label="${t('moveUp')}">${ICON_UP}</button>
+                        <button class="btn btn-icon btn-move-down" data-idx="${idx}" ${idx === rules.length - 1 ? 'disabled' : ''} title="${t('moveDown')}" aria-label="${t('moveDown')}">${ICON_DOWN}</button>
+                        <button class="btn btn-icon btn-edit" data-id="${escapeHtml(rule.id)}" title="${t('editRule')}" aria-label="${t('editRule')}">${ICON_EDIT}</button>
+                        <button class="btn btn-icon btn-dup" data-id="${escapeHtml(rule.id)}" title="${t('duplicateRule')}" aria-label="${t('duplicateRule')}">${ICON_CLONE}</button>
+                        <button class="btn btn-icon btn-danger btn-del" data-id="${escapeHtml(rule.id)}" title="${t('deleteRule')}" aria-label="${t('deleteRule')}">${ICON_DELETE}</button>
                       </div>
                     </td>
                   </tr>
@@ -131,6 +131,10 @@ export function renderRuleTable(container, { rules, warnings, onMoveUp, onMoveDo
   });
 
   container.querySelectorAll('.btn-del').forEach(btn => {
-    btn.addEventListener('click', () => onDelete(btn.dataset.id));
+    btn.addEventListener('click', () => {
+      if (confirm(t('deleteRuleConfirm'))) {
+        onDelete(btn.dataset.id);
+      }
+    });
   });
 }

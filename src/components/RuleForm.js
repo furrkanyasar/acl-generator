@@ -2,8 +2,8 @@
  * Rule Builder Form Component (Enterprise NOC Edition - Fixed Interactivity)
  */
 
-import { ACTIONS, PROTOCOLS, ADDRESS_TYPES, getCommonPorts, getIcmpTypes, createDefaultRule, escapeHtml } from '../core/types.js';
-import { maskToWildcard } from '../core/wildcard.js';
+import { ACTIONS, PROTOCOLS, ADDRESS_TYPES, normalizePort, getCommonPorts, getIcmpTypes, createDefaultRule, escapeHtml } from '../core/types.js';
+import { isValidIp, maskToWildcard } from '../core/wildcard.js';
 import { t } from '../core/i18n.js';
 
 export function renderRuleForm(container, { aclType, editingRule, onSaveRule, onCancelEdit }) {
@@ -22,9 +22,11 @@ export function renderRuleForm(container, { aclType, editingRule, onSaveRule, on
   const safeSrcIp = escapeHtml(rule.srcIp || '');
   const safeSrcMask = escapeHtml(rule.srcMask || '');
   const safeSrcPort = escapeHtml(rule.srcPort || '');
+  const safeSrcPortEnd = escapeHtml(rule.srcPortEnd || '');
   const safeDstIp = escapeHtml(rule.dstIp || '');
   const safeDstMask = escapeHtml(rule.dstMask || '');
   const safeDstPort = escapeHtml(rule.dstPort || '');
+  const safeDstPortEnd = escapeHtml(rule.dstPortEnd || '');
   const safeRemark = escapeHtml(rule.remark || '');
 
   container.innerHTML = `
@@ -94,13 +96,20 @@ export function renderRuleForm(container, { aclType, editingRule, onSaveRule, on
 
             <div class="form-group ${rule.srcPortOperator === 'any' ? 'style-hidden' : ''}" id="src-port-group">
               <label for="rule-src-port">${t('portPresetLabel')}</label>
-              <div style="display:flex; gap:0.3rem;">
-                <input type="text" id="rule-src-port" value="${safeSrcPort}" placeholder="80" style="flex:1" />
-                <select id="src-port-preset" style="width:130px;">
-                  <option value="">${t('presetSelect')}</option>
-                  ${commonPorts.map(p => `<option value="${p.value}">${p.name}</option>`).join('')}
-                </select>
-              </div>
+              ${rule.srcPortOperator === 'range' ? `
+                <div style="display:flex; gap:0.3rem;">
+                  <input type="text" id="rule-src-port" value="${safeSrcPort}" placeholder="${t('portStart') || 'Start'}" style="flex:1" />
+                  <input type="text" id="rule-src-port-end" value="${safeSrcPortEnd}" placeholder="${t('portEnd') || 'End'}" style="flex:1" />
+                </div>
+              ` : `
+                <div style="display:flex; gap:0.3rem;">
+                  <input type="text" id="rule-src-port" value="${safeSrcPort}" placeholder="80" style="flex:1" />
+                  <select id="src-port-preset" style="width:130px;">
+                    <option value="">${t('presetSelect')}</option>
+                    ${commonPorts.map(p => `<option value="${p.value}">${p.name}</option>`).join('')}
+                  </select>
+                </div>
+              `}
             </div>
           ` : ''}
 
@@ -143,13 +152,20 @@ export function renderRuleForm(container, { aclType, editingRule, onSaveRule, on
 
             <div class="form-group ${rule.dstPortOperator === 'any' ? 'style-hidden' : ''}" id="dst-port-group">
               <label for="rule-dst-port">${t('portPresetLabel')}</label>
-              <div style="display:flex; gap:0.3rem;">
-                <input type="text" id="rule-dst-port" value="${safeDstPort}" placeholder="80" style="flex:1" />
-                <select id="dst-port-preset" style="width:130px;">
-                  <option value="">${t('presetSelect')}</option>
-                  ${commonPorts.map(p => `<option value="${p.value}">${p.name}</option>`).join('')}
-                </select>
-              </div>
+              ${rule.dstPortOperator === 'range' ? `
+                <div style="display:flex; gap:0.3rem;">
+                  <input type="text" id="rule-dst-port" value="${safeDstPort}" placeholder="${t('portStart') || 'Start'}" style="flex:1" />
+                  <input type="text" id="rule-dst-port-end" value="${safeDstPortEnd}" placeholder="${t('portEnd') || 'End'}" style="flex:1" />
+                </div>
+              ` : `
+                <div style="display:flex; gap:0.3rem;">
+                  <input type="text" id="rule-dst-port" value="${safeDstPort}" placeholder="80" style="flex:1" />
+                  <select id="dst-port-preset" style="width:130px;">
+                    <option value="">${t('presetSelect')}</option>
+                    ${commonPorts.map(p => `<option value="${p.value}">${p.name}</option>`).join('')}
+                  </select>
+                </div>
+              `}
             </div>
           ` : ''}
 
@@ -237,6 +253,29 @@ export function renderRuleForm(container, { aclType, editingRule, onSaveRule, on
   document.getElementById('rule-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const finalRule = extractRuleData(rule.id, isExtended);
+
+    // Client-side Validation Guard
+    if (finalRule.srcType === ADDRESS_TYPES.HOST || finalRule.srcType === ADDRESS_TYPES.SUBNET) {
+      if (!finalRule.srcIp || !isValidIp(finalRule.srcIp)) {
+        alert(t('invalidFormWarning'));
+        return;
+      }
+    }
+    if (finalRule.dstType === ADDRESS_TYPES.HOST || finalRule.dstType === ADDRESS_TYPES.SUBNET) {
+      if (!finalRule.dstIp || !isValidIp(finalRule.dstIp)) {
+        alert(t('invalidFormWarning'));
+        return;
+      }
+    }
+    if (finalRule.srcPort && normalizePort(finalRule.srcPort) === null) {
+      alert(t('invalidFormWarning'));
+      return;
+    }
+    if (finalRule.dstPort && normalizePort(finalRule.dstPort) === null) {
+      alert(t('invalidFormWarning'));
+      return;
+    }
+
     onSaveRule(finalRule);
   });
 }
@@ -259,12 +298,14 @@ function extractRuleData(id, isExtended) {
     srcWildcard: srcType === ADDRESS_TYPES.SUBNET ? maskToWildcard(getVal('rule-src-mask')) : '',
     srcPortOperator: getVal('rule-src-port-op') || 'any',
     srcPort: getVal('rule-src-port'),
+    srcPortEnd: getVal('rule-src-port-end'),
     dstType: dstType || ADDRESS_TYPES.ANY,
     dstIp: getVal('rule-dst-ip'),
     dstMask: getVal('rule-dst-mask'),
     dstWildcard: dstType === ADDRESS_TYPES.SUBNET ? maskToWildcard(getVal('rule-dst-mask')) : '',
     dstPortOperator: getVal('rule-dst-port-op') || 'any',
     dstPort: getVal('rule-dst-port'),
+    dstPortEnd: getVal('rule-dst-port-end'),
     icmpType: getVal('rule-icmp-type') || 'any',
     log: getCheck('rule-log'),
     remark: getVal('rule-remark')

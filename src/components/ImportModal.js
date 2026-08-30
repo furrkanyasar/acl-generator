@@ -6,11 +6,24 @@ import { parseCiscoACLScript } from '../core/parser.js';
 import { t } from '../core/i18n.js';
 
 export function renderImportModal(container, { onImportSuccess, onClose }) {
+  const handleKeydown = (e) => {
+    if (e.key === 'Escape') {
+      cleanup();
+      onClose();
+    }
+  };
+
+  const cleanup = () => {
+    document.removeEventListener('keydown', handleKeydown);
+  };
+
+  document.addEventListener('keydown', handleKeydown);
+
   container.innerHTML = `
-    <div class="modal-backdrop" id="import-modal-bg">
+    <div class="modal-backdrop" id="import-modal-bg" role="dialog" aria-modal="true" aria-labelledby="import-title">
       <div class="modal-content" style="max-width: 650px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-          <h2 style="font-size:0.92rem; font-weight:700; font-family:var(--font-mono);">${t('importModalTitle')}</h2>
+          <h2 id="import-title" style="font-size:0.92rem; font-weight:700; font-family:var(--font-mono);">${t('importModalTitle')}</h2>
           <button id="import-close-btn" class="btn btn-sm">${t('closeBtn')}</button>
         </div>
 
@@ -26,10 +39,19 @@ export function renderImportModal(container, { onImportSuccess, onClose }) {
     </div>
   `;
 
-  document.getElementById('import-close-btn').addEventListener('click', onClose);
-  document.getElementById('import-cancel-btn').addEventListener('click', onClose);
+  document.getElementById('import-close-btn').addEventListener('click', () => {
+    cleanup();
+    onClose();
+  });
+  document.getElementById('import-cancel-btn').addEventListener('click', () => {
+    cleanup();
+    onClose();
+  });
   document.getElementById('import-modal-bg').addEventListener('click', (e) => {
-    if (e.target.id === 'import-modal-bg') onClose();
+    if (e.target.id === 'import-modal-bg') {
+      cleanup();
+      onClose();
+    }
   });
 
   document.getElementById('import-form').addEventListener('submit', (e) => {
@@ -38,10 +60,11 @@ export function renderImportModal(container, { onImportSuccess, onClose }) {
     if (text.trim()) {
       const parsedData = parseCiscoACLScript(text);
       if (parsedData.rules.length > 0) {
+        cleanup();
         onImportSuccess(parsedData);
         onClose();
       } else {
-        alert('No valid access-list rules found in the input text.');
+        alert(t('importNoRulesWarning'));
       }
     }
   });

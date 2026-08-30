@@ -109,11 +109,16 @@ export const translations = {
     decisionLogicMsg: 'ACE #{firstIndex} bu paketi ilk eşleştiren kural oldu. Cisco ACL değerlendirmesi ilk eşleşen kuralda durur, bu nedenle daha aşağıdaki ACE #{laterIndex} ({laterAction}) değerlendirilmedi.',
     shadowedPacketSpace: 'Gölgede Kalan Paket Uzayı',
     decisionLogicHeader: 'Karar Mantığı:',
+    portStart: 'Başlangıç Portu',
+    portEnd: 'Bitiş Portu',
+    deleteRuleConfirm: 'Bu erişim kuralını silmek istediğinize emin misiniz?',
+    invalidFormWarning: 'Lütfen geçerli IP adresleri ve port numaraları (1-65535) giriniz.',
 
     // Import Modal
     importModalTitle: 'RAW CISCO CLI İÇE AKTAR VE PARSE ET',
     parseBtn: 'İçe Aktar ve Yükle',
     importPlaceholder: 'Cisco IOS access-list komutlarını buraya yapıştırın...\nÖrnek:\nip access-list extended MY_ACL\n permit tcp host 192.168.1.50 any eq 80\n deny ip 192.168.1.0 0.0.0.255 any',
+    importNoRulesWarning: 'Girilen metinde geçerli access-list kuralı bulunamadı.',
 
     // Educational / Syslog Buffer
     proTipsTitle: 'SYSLOG & TANI KONSOLU',
@@ -259,11 +264,17 @@ export const translations = {
     laterConflictingAce: 'Later Conflicting ACE:',
     decisionLogicMsg: 'ACE #{matchedIndex} matched this packet first. Cisco ACL evaluation halts on the first matching rule, so lower ACE #{overriddenIndex} ({action}) was not evaluated.',
     shadowedPacketSpace: 'Shadowed Packet-Space:',
+    decisionLogicHeader: 'Decision Logic:',
+    portStart: 'Port Start',
+    portEnd: 'Port End',
+    deleteRuleConfirm: 'Are you sure you want to delete this rule?',
+    invalidFormWarning: 'Please provide valid IP addresses and port numbers (1-65535).',
 
     // Import Modal
     importModalTitle: 'IMPORT & PARSE RAW CISCO CLI',
     parseBtn: 'Parse & Load Rules',
     importPlaceholder: 'Paste raw Cisco IOS ACL commands here...\nExample:\nip access-list extended MY_ACL\n permit tcp host 192.168.1.50 any eq 80\n deny ip 192.168.1.0 0.0.0.255 any',
+    importNoRulesWarning: 'No valid access-list rules found in the input text.',
 
     // Educational / Syslog Buffer
     proTipsTitle: 'SYSLOG & DIAGNOSTIC CONSOLE',

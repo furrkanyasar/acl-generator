@@ -55,11 +55,12 @@ export function renderPreviewPanel(container, { config, rules }) {
   });
 
   document.getElementById('btn-download-code').addEventListener('click', () => {
+    const safeName = (config.identifier || 'acl').trim().replace(/[^a-zA-Z0-9_-]/g, '_') || 'acl';
     const blob = new Blob([rawCode], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${config.identifier || 'acl'}_script.cfg`;
+    a.download = `${safeName}_script.cfg`;
     a.click();
     URL.revokeObjectURL(url);
   });

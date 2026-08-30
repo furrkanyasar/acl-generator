@@ -15,7 +15,9 @@ import { renderImportModal } from './components/ImportModal.js';
 import { renderTrafficSimulator } from './components/TrafficSimulator.js';
 import { analyzeACL } from './core/analyzer.js';
 
-let state = {
+const STORAGE_STATE_KEY = 'acl_gen_app_state';
+
+const DEFAULT_STATE = {
   vendor: VENDORS.CISCO,
   config: {
     type: ACL_TYPES.EXTENDED_NAMED,
@@ -35,12 +37,14 @@ let state = {
       srcWildcard: '',
       srcPortOperator: 'any',
       srcPort: '',
+      srcPortEnd: '',
       dstType: ADDRESS_TYPES.ANY,
       dstIp: '',
       dstMask: '',
       dstWildcard: '',
       dstPortOperator: 'eq',
       dstPort: '80',
+      dstPortEnd: '',
       icmpType: 'any',
       log: false,
       remark: 'Allow HTTP traffic from Host'
@@ -56,12 +60,14 @@ let state = {
       srcWildcard: '0.0.0.255',
       srcPortOperator: 'any',
       srcPort: '',
+      srcPortEnd: '',
       dstType: ADDRESS_TYPES.ANY,
       dstIp: '',
       dstMask: '',
       dstWildcard: '',
       dstPortOperator: 'any',
       dstPort: '',
+      dstPortEnd: '',
       icmpType: 'any',
       log: false,
       remark: 'Block rest of subnet'
@@ -70,7 +76,7 @@ let state = {
   editingRuleId: null,
   isTemplatesOpen: false,
   isImportOpen: false,
-  activeRightTab: 'sim', // 'cli', 'sim', 'syslog'
+  activeRightTab: 'sim',
   simPacket: {
     srcIp: '192.168.1.50',
     dstIp: '10.0.0.1',
@@ -81,12 +87,51 @@ let state = {
   }
 };
 
+function loadInitialState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_STATE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && Array.isArray(parsed.rules)) {
+        return {
+          ...DEFAULT_STATE,
+          vendor: parsed.vendor || DEFAULT_STATE.vendor,
+          config: { ...DEFAULT_STATE.config, ...(parsed.config || {}) },
+          rules: parsed.rules,
+          activeRightTab: parsed.activeRightTab || DEFAULT_STATE.activeRightTab,
+          simPacket: { ...DEFAULT_STATE.simPacket, ...(parsed.simPacket || {}) }
+        };
+      }
+    }
+  } catch (e) {
+    // Ignore storage parse error and fall back to default
+  }
+  return { ...DEFAULT_STATE, rules: DEFAULT_STATE.rules.map(r => ({ ...r })) };
+}
+
+function saveStateToStorage(st) {
+  try {
+    localStorage.setItem(STORAGE_STATE_KEY, JSON.stringify({
+      vendor: st.vendor,
+      config: st.config,
+      rules: st.rules,
+      activeRightTab: st.activeRightTab,
+      simPacket: st.simPacket
+    }));
+  } catch (e) {
+    // Ignore storage quota errors
+  }
+}
+
+let state = loadInitialState();
+
 function setState(updater) {
   if (typeof updater === 'function') {
     state = updater(state);
   } else {
     state = { ...state, ...updater };
   }
+  saveStateToStorage(state);
   renderApp();
 }
 
@@ -133,15 +178,15 @@ function renderApp() {
     onOpenImport: () => setState({ isImportOpen: true }),
     onReset: () => {
       if (confirm(t('resetConfirm'))) {
+        try {
+          localStorage.removeItem(STORAGE_STATE_KEY);
+        } catch (e) {}
         setState({
-          config: {
-            type: ACL_TYPES.EXTENDED_NAMED,
-            identifier: 'MY_SECURE_ACL',
-            interfaceName: 'GigabitEthernet0/1',
-            interfaceDirection: 'in'
-          },
-          rules: [],
-          editingRuleId: null
+          vendor: DEFAULT_STATE.vendor,
+          config: { ...DEFAULT_STATE.config },
+          rules: DEFAULT_STATE.rules.map(r => ({ ...r })),
+          editingRuleId: null,
+          activeRightTab: 'sim'
         });
       }
     }

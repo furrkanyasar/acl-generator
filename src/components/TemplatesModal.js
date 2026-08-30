@@ -292,11 +292,24 @@ export function getStarterTemplates() {
 export function renderTemplatesModal(container, { onSelectTemplate, onClose }) {
   const templates = getStarterTemplates();
 
+  const handleKeydown = (e) => {
+    if (e.key === 'Escape') {
+      cleanup();
+      onClose();
+    }
+  };
+
+  const cleanup = () => {
+    document.removeEventListener('keydown', handleKeydown);
+  };
+
+  document.addEventListener('keydown', handleKeydown);
+
   container.innerHTML = `
-    <div class="modal-backdrop" id="modal-bg">
+    <div class="modal-backdrop" id="modal-bg" role="dialog" aria-modal="true" aria-labelledby="templates-title">
       <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-          <h2 style="font-size:1rem; font-weight:700; font-family:var(--font-mono);">${t('templatesModalTitle')}</h2>
+          <h2 id="templates-title" style="font-size:1rem; font-weight:700; font-family:var(--font-mono);">${t('templatesModalTitle')}</h2>
           <button id="modal-close-btn" class="btn btn-sm">${t('closeBtn')}</button>
         </div>
 
@@ -312,13 +325,20 @@ export function renderTemplatesModal(container, { onSelectTemplate, onClose }) {
     </div>
   `;
 
-  document.getElementById('modal-close-btn').addEventListener('click', onClose);
+  document.getElementById('modal-close-btn').addEventListener('click', () => {
+    cleanup();
+    onClose();
+  });
   document.getElementById('modal-bg').addEventListener('click', (e) => {
-    if (e.target.id === 'modal-bg') onClose();
+    if (e.target.id === 'modal-bg') {
+      cleanup();
+      onClose();
+    }
   });
 
   templates.forEach((tmpl, idx) => {
     document.getElementById(`template-card-${idx}`).addEventListener('click', () => {
+      cleanup();
       onSelectTemplate(tmpl);
       onClose();
     });
