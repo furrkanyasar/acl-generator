@@ -73,8 +73,8 @@ export function parseCiscoACLScript(rawText) {
       const num = parseInt(tokens[1], 10);
       if (!isNaN(num)) {
         config.identifier = tokens[1];
-        if (num >= 100 && num <= 199) config.type = ACL_TYPES.EXTENDED_NUMBERED;
-        else if (num >= 1 && num <= 99) config.type = ACL_TYPES.STANDARD_NUMBERED;
+        if ((num >= 100 && num <= 199) || (num >= 2000 && num <= 2699)) config.type = ACL_TYPES.EXTENDED_NUMBERED;
+        else if ((num >= 1 && num <= 99) || (num >= 1300 && num <= 1999)) config.type = ACL_TYPES.STANDARD_NUMBERED;
       }
       tokens = tokens.slice(2); // Strip 'access-list 101'
     }
