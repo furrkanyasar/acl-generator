@@ -359,3 +359,24 @@ export function runFullTestSuite(customModules = {}) {
 
   return { passedCount, failedCount, total: passedCount + failedCount, results };
 }
+
+// Auto-run if executed directly via Node CLI
+const isDirectRun = process.argv[1] && (process.argv[1].endsWith('test_runner_node.js') || process.argv[1].includes('test_runner_node'));
+if (isDirectRun) {
+  console.log('==================================================================');
+  console.log('  ACL GENERATOR — NODE.JS UNIT & INTEGRATION TEST SUITE');
+  console.log('==================================================================\n');
+  const summary = runFullTestSuite();
+  summary.results.forEach(r => {
+    if (r.status === 'PASS') {
+      console.log(`[PASS] ${r.id} | ${r.funcName} - ${r.inputDesc} -> ${r.expectedDesc}`);
+    } else {
+      console.error(`[FAIL] ${r.id} | ${r.funcName} - ${r.inputDesc}. Expected: ${r.expectedDesc}, Actual: ${r.actual}`);
+    }
+  });
+  console.log('\n==================================================================');
+  console.log(`TOTAL: ${summary.total} | PASSED: ${summary.passedCount} | FAILED: ${summary.failedCount}`);
+  console.log(`FINAL DECISION: ${summary.failedCount === 0 ? 'PASS' : 'FAIL'}`);
+  console.log('==================================================================');
+}
+
