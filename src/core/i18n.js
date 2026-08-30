@@ -106,7 +106,7 @@ export const translations = {
     matchResultTitle: 'EŞLEŞME SONUCU',
     explainableTitle: '💡 Açıklanabilir Politika Teşhisi (Neden?)',
     laterConflictingAce: 'Sonraki Çatışan ACE:',
-    decisionLogicMsg: 'ACE #{firstIndex} bu paketi ilk eşleştiren kural oldu. Cisco ACL değerlendirmesi ilk eşleşen kuralda durur, bu nedenle daha aşağıdaki ACE #{laterIndex} ({laterAction}) değerlendirilmedi.',
+    decisionLogicMsg: 'ACE #{matchedIndex} bu paketi ilk eşleştiren kural oldu. Cisco ACL değerlendirmesi ilk eşleşen kuralda durur, bu nedenle daha aşağıdaki ACE #{overriddenIndex} ({action}) değerlendirilmedi.',
     shadowedPacketSpace: 'Gölgede Kalan Paket Uzayı',
     decisionLogicHeader: 'Karar Mantığı:',
     portStart: 'Başlangıç Portu',
