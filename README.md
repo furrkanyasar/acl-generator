@@ -125,25 +125,42 @@ Projedeki ağ matematiği, CIDR kapsama cebiri ve kural eşleşme motorunu uçta
 node run_all_release_tests.js
 ```
 
+Ayrıca uçtan uca düğüm testlerini çalıştırmak için:
+```bash
+node test_runner_node.js
+```
+
 Beklenen çıktı:
 ```text
 ==================================================================
   FINAL RELEASE GATE SCORECARD REPORT
 ==================================================================
+PRODUCTION IMPORT:               PASS
 INTEGRATION:                     44/44 PASS
+NEGATIVE:                        17/17 PASS
 PROPERTY:                        1000/1000 PASS
 MUTATION:                        15/15 KILLED (%100.0)
+FUZZ:                            50/50 PASS
 PARSER E2E:                      10/10 PASS
 SIMULATOR DIFFERENTIAL:          21/21 PASS
 SECURITY:                        11/11 PASS
-FINAL DECISION:                  PASS
+DISABLED INDEX:                  5/5 PASS
+HOST /32:                        3/3 PASS
+PORT INTERVAL:                   15/15 PASS
+PROTOCOL:                        3/3 PASS
+ICMP:                            2/2 PASS
+RUNNER SELF TEST:                PASS
+
+==================================================================
+  FINAL DECISION: PASS
+==================================================================
 ```
 
 ---
 
 ## Lisans
 
-Bu proje **MIT Lisansı** ile lisanslanmıştır. Eğitim ve kurumsal ağ mühendisliği kullanımı için tamamen açık kaynaklıdır.
+Bu proje **GNU General Public License v3.0 (GPL-3.0)** ile lisanslanmıştır. Eğitim ve kurumsal ağ mühendisliği kullanımı için tamamen açık kaynaklıdır.
 
 ---
 
@@ -241,24 +258,41 @@ To run the full end-to-end master test suite (interval algebra, property tests, 
 node run_all_release_tests.js
 ```
 
+To run end-to-end node suite tests:
+```bash
+node test_runner_node.js
+```
+
 Expected output:
 ```text
 ==================================================================
   FINAL RELEASE GATE SCORECARD REPORT
 ==================================================================
+PRODUCTION IMPORT:               PASS
 INTEGRATION:                     44/44 PASS
+NEGATIVE:                        17/17 PASS
 PROPERTY:                        1000/1000 PASS
 MUTATION:                        15/15 KILLED (%100.0)
+FUZZ:                            50/50 PASS
 PARSER E2E:                      10/10 PASS
 SIMULATOR DIFFERENTIAL:          21/21 PASS
 SECURITY:                        11/11 PASS
-FINAL DECISION:                  PASS
+DISABLED INDEX:                  5/5 PASS
+HOST /32:                        3/3 PASS
+PORT INTERVAL:                   15/15 PASS
+PROTOCOL:                        3/3 PASS
+ICMP:                            2/2 PASS
+RUNNER SELF TEST:                PASS
+
+==================================================================
+  FINAL DECISION: PASS
+==================================================================
 ```
 
 ---
 
 ### License
 
-Distributed under the **MIT License**. Open-source for educational and professional network engineering use.
+Distributed under the **GNU General Public License v3.0 (GPL-3.0)**. Open-source for educational and professional network engineering use.
 
 </details>
