@@ -254,24 +254,44 @@ export function renderRuleForm(container, { aclType, editingRule, onSaveRule, on
     e.preventDefault();
     const finalRule = extractRuleData(rule.id, isExtended);
 
+    // Reset previous error outlines
+    ['rule-src-ip', 'rule-dst-ip', 'rule-src-port', 'rule-src-port-end', 'rule-dst-port', 'rule-dst-port-end'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.borderColor = '';
+    });
+
+    let invalidFieldId = null;
+
     // Client-side Validation Guard
     if (finalRule.srcType === ADDRESS_TYPES.HOST || finalRule.srcType === ADDRESS_TYPES.SUBNET) {
       if (!finalRule.srcIp || !isValidIp(finalRule.srcIp)) {
-        alert(t('invalidFormWarning'));
-        return;
+        invalidFieldId = 'rule-src-ip';
       }
     }
-    if (finalRule.dstType === ADDRESS_TYPES.HOST || finalRule.dstType === ADDRESS_TYPES.SUBNET) {
+    if (!invalidFieldId && (finalRule.dstType === ADDRESS_TYPES.HOST || finalRule.dstType === ADDRESS_TYPES.SUBNET)) {
       if (!finalRule.dstIp || !isValidIp(finalRule.dstIp)) {
-        alert(t('invalidFormWarning'));
-        return;
+        invalidFieldId = 'rule-dst-ip';
       }
     }
-    if (finalRule.srcPort && normalizePort(finalRule.srcPort) === null) {
-      alert(t('invalidFormWarning'));
-      return;
+    if (!invalidFieldId && finalRule.srcPort && normalizePort(finalRule.srcPort) === null) {
+      invalidFieldId = 'rule-src-port';
     }
-    if (finalRule.dstPort && normalizePort(finalRule.dstPort) === null) {
+    if (!invalidFieldId && finalRule.srcPortEnd && normalizePort(finalRule.srcPortEnd) === null) {
+      invalidFieldId = 'rule-src-port-end';
+    }
+    if (!invalidFieldId && finalRule.dstPort && normalizePort(finalRule.dstPort) === null) {
+      invalidFieldId = 'rule-dst-port';
+    }
+    if (!invalidFieldId && finalRule.dstPortEnd && normalizePort(finalRule.dstPortEnd) === null) {
+      invalidFieldId = 'rule-dst-port-end';
+    }
+
+    if (invalidFieldId) {
+      const el = document.getElementById(invalidFieldId);
+      if (el) {
+        el.style.borderColor = 'var(--status-red)';
+        el.focus();
+      }
       alert(t('invalidFormWarning'));
       return;
     }

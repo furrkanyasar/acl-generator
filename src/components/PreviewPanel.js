@@ -45,14 +45,42 @@ export function renderPreviewPanel(container, { config, rules }) {
   `;
 
   document.getElementById('btn-copy-code').addEventListener('click', () => {
-    navigator.clipboard.writeText(rawCode).then(() => {
+    const showFeedback = () => {
       const btn = document.getElementById('btn-copy-code');
-      btn.textContent = t('copied');
-      setTimeout(() => {
-        btn.textContent = t('copyScript');
-      }, 2000);
-    });
+      if (btn) {
+        btn.textContent = t('copied');
+        setTimeout(() => {
+          btn.textContent = t('copyScript');
+        }, 2000);
+      }
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(rawCode)
+        .then(showFeedback)
+        .catch(() => fallbackCopy(rawCode, showFeedback));
+    } else {
+      fallbackCopy(rawCode, showFeedback);
+    }
   });
+
+  function fallbackCopy(text, onSuccess) {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      textArea.remove();
+      if (onSuccess) onSuccess();
+    } catch (e) {
+      // Ignore fallback failure
+    }
+  }
 
   document.getElementById('btn-download-code').addEventListener('click', () => {
     const safeName = (config.identifier || 'acl').trim().replace(/[^a-zA-Z0-9_-]/g, '_') || 'acl';

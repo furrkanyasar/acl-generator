@@ -153,7 +153,7 @@ html, body {
   overflow: hidden;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1100px), (pointer: coarse) {
   html, body, #app-container {
     height: auto !important;
     max-height: none !important;
@@ -165,6 +165,14 @@ html, body {
   }
   .column {
     overflow: visible;
+  }
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+  .btn {
+    min-height: 34px;
   }
 }
 
